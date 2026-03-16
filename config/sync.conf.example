@@ -1,0 +1,15 @@
+# claude-bridge configuration
+# Copy this file to ~/.claude-bridge/sync.conf and customize
+
+# Machine name (default: hostname)
+# MACHINE_NAME=my-laptop
+
+# Path to Claude Code config directory
+# CLAUDE_DIR=~/.claude
+
+# Sync targets (comma-separated)
+# Available: projects,history,settings,claude_md,agents,skills,plugins,rules
+SYNC_TARGETS=projects,history,settings,claude_md
+
+# Commit message prefix
+# COMMIT_PREFIX=sync
