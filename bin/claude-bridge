@@ -16,8 +16,11 @@ Commands:
     push              Encrypt and push changes to remote
     pull              Pull and decrypt changes from remote
     status            Show sync status
+    diff              Preview changes before pushing
     config            View or update configuration
     map <src> <dst>   Add a path mapping between machines
+    projects          List synced projects
+    auto              Manage automatic sync (on/off/status)
 
 Options:
     -h, --help        Show this help message
@@ -27,8 +30,13 @@ Examples:
     claude-bridge init
     claude-bridge push
     claude-bridge push --message "sync from laptop"
+    claude-bridge push --project myapp
     claude-bridge pull
     claude-bridge status
+    claude-bridge diff
+    claude-bridge diff --content
+    claude-bridge projects
+    claude-bridge auto on 30m
     claude-bridge config set MACHINE_NAME my-laptop
     claude-bridge map /home/user/dev/app /Users/user/dev/app
 USAGE
@@ -95,6 +103,21 @@ main() {
             # shellcheck source=../lib/status.sh
             source "${LIB_DIR}/status.sh"
             cmd_status "$@"
+            ;;
+        diff)
+            # shellcheck source=../lib/diff.sh
+            source "${LIB_DIR}/diff.sh"
+            cmd_diff "$@"
+            ;;
+        projects)
+            # shellcheck source=../lib/projects.sh
+            source "${LIB_DIR}/projects.sh"
+            cmd_projects "$@"
+            ;;
+        auto)
+            # shellcheck source=../lib/auto.sh
+            source "${LIB_DIR}/auto.sh"
+            cmd_auto "$@"
             ;;
         config)
             # shellcheck source=../lib/config.sh
