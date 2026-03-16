@@ -1,0 +1,9 @@
+# Path mappings for cross-machine sync
+# Format: <source_path> = <destination_path>
+#
+# When pushing from this machine, source paths are normalized.
+# When pulling to this machine, they are expanded to destination paths.
+#
+# Example:
+# /home/alice/projects/myapp = /Users/alice/dev/myapp
+# /home/alice/projects/llm-glass = /Users/alice/dev/llm-glass
