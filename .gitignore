@@ -1,0 +1,18 @@
+# Decrypted data (never push)
+decrypted/*
+
+# Passphrase and key files
+*.key
+.env
+
+# Local config (created by init)
+.claude-bridge/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
