@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly VERSION="0.1.0"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly LIB_DIR="${SCRIPT_DIR}/lib"
+
+usage() {
+    cat >&2 <<USAGE
+claude-bridge v${VERSION} — Sync Claude Code across machines
+
+Usage: claude-bridge <command> [options]
+
+Commands:
+    init              Initialize claude-bridge (first-time setup)
+    push              Encrypt and push changes to remote
+    pull              Pull and decrypt changes from remote
+    status            Show sync status
+    config            View or update configuration
+    map <src> <dst>   Add a path mapping between machines
+
+Options:
+    -h, --help        Show this help message
+    -v, --version     Show version
+
+Examples:
+    claude-bridge init
+    claude-bridge push
+    claude-bridge push --message "sync from laptop"
+    claude-bridge pull
+    claude-bridge status
+    claude-bridge config set MACHINE_NAME my-laptop
+    claude-bridge map /home/user/dev/app /Users/user/dev/app
+USAGE
+}
+
+check_dependencies() {
+    local missing=()
+
+    if ! command -v git &>/dev/null; then
+        missing+=("git")
+    fi
+
+    if ! command -v age &>/dev/null; then
+        missing+=("age (install: brew install age / apt install age)")
+    fi
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        printf "Error: missing required dependencies:\n" >&2
+        for dep in "${missing[@]}"; do
+            printf "  - %s\n" "${dep}" >&2
+        done
+        printf "\nRun ./install.sh to install dependencies.\n" >&2
+        exit 1
+    fi
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        usage
+        exit 1
+    fi
+
+    local command="$1"
+    shift
+
+    case "${command}" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        -v | --version)
+            printf "claude-bridge v%s\n" "${VERSION}"
+            exit 0
+            ;;
+        init)
+            check_dependencies
+            # shellcheck source=../lib/init.sh
+            source "${LIB_DIR}/init.sh"
+            cmd_init "$@"
+            ;;
+        push)
+            check_dependencies
+            # shellcheck source=../lib/push.sh
+            source "${LIB_DIR}/push.sh"
+            cmd_push "$@"
+            ;;
+        pull)
+            check_dependencies
+            # shellcheck source=../lib/pull.sh
+            source "${LIB_DIR}/pull.sh"
+            cmd_pull "$@"
+            ;;
+        status)
+            # shellcheck source=../lib/status.sh
+            source "${LIB_DIR}/status.sh"
+            cmd_status "$@"
+            ;;
+        config)
+            # shellcheck source=../lib/config.sh
+            source "${LIB_DIR}/config.sh"
+            cmd_config "$@"
+            ;;
+        map)
+            # shellcheck source=../lib/path_resolver.sh
+            source "${LIB_DIR}/path_resolver.sh"
+            cmd_map "$@"
+            ;;
+        *)
+            printf "Error: unknown command '%s'\n\n" "${command}" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
