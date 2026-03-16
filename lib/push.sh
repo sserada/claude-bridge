@@ -142,6 +142,7 @@ remove_from_manifest() {
 cmd_push() {
     local commit_message=""
     local force=false
+    local project_filter=""
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -153,6 +154,10 @@ cmd_push() {
             --force | -f)
                 force=true
                 shift
+                ;;
+            --project | -p)
+                project_filter="$2"
+                shift 2
                 ;;
             *)
                 printf "Unknown option: %s\n" "$1" >&2
@@ -187,6 +192,13 @@ cmd_push() {
     # Collect files to sync
     local sync_files
     sync_files=$(get_sync_files "${claude_dir}")
+
+    # Apply project filter if specified
+    if [[ -n "${project_filter}" ]]; then
+        source "$(dirname "${BASH_SOURCE[0]}")/projects.sh"
+        sync_files=$(filter_files_by_project "${sync_files}" "${project_filter}") || return 1
+        printf "Filtering to project: %s\n" "${project_filter}" >&2
+    fi
 
     if [[ -z "${sync_files}" ]]; then
         printf "No files to sync.\n" >&2
