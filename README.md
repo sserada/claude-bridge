@@ -1,17 +1,30 @@
 # claude-bridge
 
-Sync your Claude Code conversations and settings across machines — securely.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Shell: Bash](https://img.shields.io/badge/Shell-Bash%204.0%2B-green.svg)](https://www.gnu.org/software/bash/)
+[![Encryption: age](https://img.shields.io/badge/Encryption-age-orange.svg)](https://github.com/FiloSottile/age)
+
+> Sync your Claude Code conversations and settings across machines — securely.
+
+**[日本語はこちら / Japanese](#日本語)**
 
 `claude-bridge` encrypts your `~/.claude/` directory with [age](https://github.com/FiloSottile/age) and stores it in a private Git repository. Simple git-like interface: `push`, `pull`, `status`.
 
+```
+[Machine A]                    [GitHub Private Repo]              [Machine B]
+~/.claude/ → encrypt → push → encrypted/ branch → pull → decrypt → ~/.claude/
+```
+
 ## Features
 
-- **Git-like workflow** — `claude-bridge push` / `pull` / `status`
-- **Encryption first** — All data is encrypted locally before pushing (age + passphrase)
-- **Differential sync** — Only changed files are encrypted and transferred
+- **Git-like workflow** — `push` / `pull` / `status` / `diff`
+- **Encryption first** — All data encrypted locally with [age](https://github.com/FiloSottile/age) before pushing
+- **Differential sync** — Only changed files are encrypted and transferred (SHA-256 manifest)
 - **Zero config** — `init` once, sync everywhere
 - **Zero cost** — Uses your own GitHub private repo as storage
-- **Cross-machine paths** — Remap project paths between machines
+- **Cross-machine paths** — Remap project paths between machines with `map`
+- **Selective sync** — Push/pull specific projects with `--project`
+- **Auto-sync** — Set up periodic sync via cron with `auto on`
 
 ## Quick Start
 
@@ -29,6 +42,9 @@ cd my-claude-sync
 ./install.sh
 claude-bridge init
 # Enter a passphrase (remember it for other machines)
+
+# 4. Push your data
+claude-bridge push
 ```
 
 ### Additional Machines
@@ -38,10 +54,9 @@ claude-bridge init
 git clone git@github.com:<you>/my-claude-sync.git
 cd my-claude-sync
 
-# 2. Install and initialize
+# 2. Install and initialize (use the SAME passphrase)
 ./install.sh
 claude-bridge init
-# Enter the SAME passphrase
 
 # 3. Map paths if they differ between machines
 claude-bridge map /home/user/projects/app /Users/user/dev/app
@@ -50,21 +65,32 @@ claude-bridge map /home/user/projects/app /Users/user/dev/app
 ## Usage
 
 ```bash
-# Push local changes (encrypt → commit → push)
-claude-bridge push
+# Core sync
+claude-bridge push                        # Encrypt and push changes
+claude-bridge pull                        # Pull and decrypt changes
+claude-bridge status                      # Show sync status
+claude-bridge diff                        # Preview changes before push
+claude-bridge diff --content              # Show text diffs
 
-# Pull remote changes (pull → decrypt → restore)
-claude-bridge pull
+# Selective sync
+claude-bridge push --project myapp        # Push only one project
+claude-bridge pull --project myapp        # Pull only one project
+claude-bridge projects                    # List all projects
 
-# Check sync status
-claude-bridge status
+# Cross-machine paths
+claude-bridge map <src> <dst>             # Add path mapping
+claude-bridge map --list                  # Show mappings
+claude-bridge map --remove <src>          # Remove mapping
 
-# Map paths between machines
-claude-bridge map <source_path> <dest_path>
+# Auto-sync
+claude-bridge auto on 30m                 # Enable cron (every 30 min)
+claude-bridge auto off                    # Disable cron
+claude-bridge auto status                 # Show cron status
 
-# View/update config
-claude-bridge config
-claude-bridge config set MACHINE_NAME my-laptop
+# Configuration
+claude-bridge config                      # Show all settings
+claude-bridge config set KEY VALUE        # Update a setting
+claude-bridge config get KEY              # Read a setting
 ```
 
 ## What Gets Synced
@@ -94,8 +120,81 @@ Configure sync targets in `~/.claude-bridge/sync.conf`.
 - Bash 4.0+
 - git
 - [age](https://github.com/FiloSottile/age) (auto-installed by `install.sh`)
-- jq (optional, for JSON processing)
+- jq (recommended, for JSON processing)
 
 ## License
 
-MIT
+[MIT](LICENSE)
+
+---
+
+<a id="日本語"></a>
+
+## 日本語
+
+> Claude Code の会話履歴・設定をマシン間で安全に同期する CLI ツール
+
+### 概要
+
+`claude-bridge` は `~/.claude/` ディレクトリを [age](https://github.com/FiloSottile/age) で暗号化し、GitHub の Private リポジトリに保存します。Git ライクなインターフェース（`push` / `pull` / `status`）で簡単に同期できます。
+
+### 特徴
+
+- **Git ライク** — `push` / `pull` / `status` / `diff` のシンプルな CLI
+- **暗号化ファースト** — ローカルで暗号化してから push、復号は pull 時のみ
+- **差分同期** — 変更ファイルのみ暗号化・転送（SHA-256 マニフェスト）
+- **ゼロコンフィグ** — `init` 一発で使い始められる
+- **ゼロコスト** — GitHub Private リポをストレージに利用
+- **クロスマシン対応** — `map` でマシン間のパスを変換
+- **選択的同期** — `--project` で特定プロジェクトのみ同期
+- **自動同期** — `auto on` で cron による定期同期
+
+### クイックスタート
+
+#### 1台目（初回セットアップ）
+
+```bash
+# 1. GitHub でこのテンプレートから Private リポを作成
+#    "Use this template" → Private に設定
+
+# 2. クローン
+git clone git@github.com:<you>/my-claude-sync.git
+cd my-claude-sync
+
+# 3. インストール & 初期化
+./install.sh
+claude-bridge init
+# パスフレーズを入力（他のマシンでも同じものを使用）
+
+# 4. 初回 push
+claude-bridge push
+```
+
+#### 2台目以降
+
+```bash
+# 1. 同じリポをクローン
+git clone git@github.com:<you>/my-claude-sync.git
+cd my-claude-sync
+
+# 2. インストール & 初期化（同じパスフレーズを使用）
+./install.sh
+claude-bridge init
+
+# 3. パスが異なる場合はマッピング追加
+claude-bridge map /home/user/projects/app /Users/user/dev/app
+```
+
+### セキュリティ
+
+- [age](https://github.com/FiloSottile/age) によるパスフレーズベースの暗号化
+- 暗号化済みデータのみがリモートに送信される
+- パスフレーズは `~/.claude-bridge/passphrase` にローカル保存（`chmod 600`）
+- リポジトリは **Private** に設定すること（暗号化は二重防御）
+
+### 動作要件
+
+- Bash 4.0+
+- git
+- [age](https://github.com/FiloSottile/age)（`install.sh` で自動インストール）
+- jq（推奨、JSON 処理用）
