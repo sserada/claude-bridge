@@ -6,7 +6,7 @@
 
 > Sync your Claude Code conversations and settings across machines — securely.
 
-**[日本語はこちら / Japanese](#日本語)**
+**[日本語はこちら / Japanese](#japanese)**
 
 `claude-bridge` encrypts your `~/.claude/` directory with [age](https://github.com/FiloSottile/age) and stores it in a private Git repository. Simple git-like interface: `push`, `pull`, `status`.
 
@@ -128,7 +128,7 @@ Configure sync targets in `~/.claude-bridge/sync.conf`.
 
 ---
 
-<a id="日本語"></a>
+<a id="japanese"></a>
 
 ## 日本語
 
