@@ -2,16 +2,16 @@
 # config.sh — Configuration management for claude-bridge
 set -euo pipefail
 
-readonly CLAUDE_BRIDGE_DIR="${HOME}/.claude-bridge"
-readonly CONFIG_FILE="${CLAUDE_BRIDGE_DIR}/sync.conf"
-readonly MANIFEST_FILE="${CLAUDE_BRIDGE_DIR}/manifest.json"
-readonly PASSPHRASE_FILE="${CLAUDE_BRIDGE_DIR}/passphrase"
-readonly CONFLICTS_DIR="${CLAUDE_BRIDGE_DIR}/conflicts"
+CLAUDE_BRIDGE_DIR="${HOME}/.claude-bridge"
+CONFIG_FILE="${CLAUDE_BRIDGE_DIR}/sync.conf"
+MANIFEST_FILE="${CLAUDE_BRIDGE_DIR}/manifest.json"
+PASSPHRASE_FILE="${CLAUDE_BRIDGE_DIR}/passphrase"
+CONFLICTS_DIR="${CLAUDE_BRIDGE_DIR}/conflicts"
 
 # Default values
-readonly DEFAULT_CLAUDE_DIR="${HOME}/.claude"
-readonly DEFAULT_SYNC_TARGETS="projects,history,settings,claude_md"
-readonly DEFAULT_COMMIT_PREFIX="sync"
+DEFAULT_CLAUDE_DIR="${HOME}/.claude"
+DEFAULT_SYNC_TARGETS="projects,history,settings,claude_md"
+DEFAULT_COMMIT_PREFIX="sync"
 
 ensure_config_dir() {
     if [[ ! -d "${CLAUDE_BRIDGE_DIR}" ]]; then
