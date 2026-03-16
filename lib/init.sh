@@ -6,34 +6,6 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/crypto.sh"
 
-prompt_passphrase() {
-    local passphrase passphrase_confirm
-
-    printf "Enter a passphrase for encrypting your Claude data.\n" >&2
-    printf "Use the SAME passphrase on all machines.\n\n" >&2
-
-    # Read passphrase (hide input)
-    printf "Passphrase: " >&2
-    read -rs passphrase
-    printf "\n" >&2
-
-    if [[ -z "${passphrase}" ]]; then
-        printf "Error: passphrase cannot be empty.\n" >&2
-        return 1
-    fi
-
-    printf "Confirm passphrase: " >&2
-    read -rs passphrase_confirm
-    printf "\n" >&2
-
-    if [[ "${passphrase}" != "${passphrase_confirm}" ]]; then
-        printf "Error: passphrases do not match.\n" >&2
-        return 1
-    fi
-
-    printf "%s" "${passphrase}"
-}
-
 create_initial_manifest() {
     local claude_dir
     claude_dir=$(get_claude_dir)
@@ -64,17 +36,52 @@ has_encrypted_data() {
 
     # Check if there are any files besides .gitkeep
     local count
-    count=$(find "${encrypted_dir}" -type f ! -name ".gitkeep" 2>/dev/null | wc -l | tr -d ' ')
+    count=$(find "${encrypted_dir}" -type f ! -name ".gitkeep" ! -name "manifest.json" 2>/dev/null | wc -l | tr -d ' ')
     [[ "${count}" -gt 0 ]]
+}
+
+import_identity() {
+    printf "To sync with an existing setup, copy the identity file from your first machine.\n" >&2
+    printf "On your first machine, run:\n\n" >&2
+    printf "  cat ~/.claude-bridge/identity.txt\n\n" >&2
+    printf "Then paste the entire contents here (ends with an empty line):\n" >&2
+
+    local identity_content=""
+    local line
+    while IFS= read -r line; do
+        [[ -z "${line}" ]] && break
+        identity_content+="${line}"$'\n'
+    done
+
+    if [[ -z "${identity_content}" ]]; then
+        printf "Error: no identity provided.\n" >&2
+        return 1
+    fi
+
+    ensure_config_dir
+    printf "%s" "${identity_content}" > "${IDENTITY_FILE}"
+    chmod 600 "${IDENTITY_FILE}"
+
+    # Extract recipient from identity file
+    local recipient
+    recipient=$(age-keygen -y "${IDENTITY_FILE}" 2>/dev/null)
+    if [[ -z "${recipient}" ]]; then
+        printf "Error: invalid identity file.\n" >&2
+        rm -f "${IDENTITY_FILE}"
+        return 1
+    fi
+    printf "%s" "${recipient}" > "${RECIPIENT_FILE}"
+
+    printf "Identity imported successfully.\n" >&2
 }
 
 cmd_init() {
     printf "Initializing claude-bridge...\n\n" >&2
 
     # Check if already initialized
-    if [[ -f "${PASSPHRASE_FILE}" ]]; then
+    if [[ -f "${IDENTITY_FILE}" ]]; then
         printf "Warning: claude-bridge is already initialized.\n" >&2
-        printf "Passphrase file exists at %s\n" "${PASSPHRASE_FILE}" >&2
+        printf "Identity file exists at %s\n" "${IDENTITY_FILE}" >&2
         printf "To reinitialize, remove %s and run init again.\n" "${CLAUDE_BRIDGE_DIR}" >&2
         return 1
     fi
@@ -85,20 +92,21 @@ cmd_init() {
     ensure_config_dir
     ensure_config_file
 
-    # Prompt for passphrase
-    local passphrase
-    passphrase=$(prompt_passphrase) || return 1
-    set_passphrase "${passphrase}"
-    printf "Passphrase saved.\n\n" >&2
-
     # Check if this repo already has encrypted data (joining existing)
     if has_encrypted_data; then
         printf "Existing encrypted data found in repository.\n" >&2
-        printf "Pulling and decrypting data from remote...\n\n" >&2
+        printf "This appears to be a second machine joining an existing sync.\n\n" >&2
+        import_identity || return 1
+        printf "\nPulling and decrypting data from remote...\n\n" >&2
+        create_initial_manifest
         source "$(dirname "${BASH_SOURCE[0]}")/pull.sh"
         cmd_pull
     else
-        printf "Fresh setup — no existing data found.\n" >&2
+        printf "Fresh setup — generating new encryption key.\n" >&2
+        generate_identity
+        printf "Encryption key generated.\n" >&2
+        printf "  Identity:  %s\n" "${IDENTITY_FILE}" >&2
+        printf "  Recipient: %s\n\n" "$(get_recipient)" >&2
 
         local claude_dir
         claude_dir=$(get_claude_dir)
@@ -119,4 +127,7 @@ cmd_init() {
     printf "\nclaude-bridge initialized successfully!\n" >&2
     printf "Machine: %s\n" "$(config_get MACHINE_NAME)" >&2
     printf "Config:  %s\n" "${CONFIG_FILE}" >&2
+    printf "\nIMPORTANT: To set up additional machines, you will need the identity file:\n" >&2
+    printf "  %s\n" "${IDENTITY_FILE}" >&2
+    printf "Keep it safe — anyone with this file can decrypt your data.\n" >&2
 }

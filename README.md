@@ -41,7 +41,7 @@ cd my-claude-sync
 # 3. Install and initialize
 ./install.sh
 claude-bridge init
-# Enter a passphrase (remember it for other machines)
+# Generates encryption key pair
 
 # 4. Push your data
 claude-bridge push
@@ -54,7 +54,7 @@ claude-bridge push
 git clone git@github.com:<you>/my-claude-sync.git
 cd my-claude-sync
 
-# 2. Install and initialize (use the SAME passphrase)
+# 2. Install and initialize (paste identity from first machine)
 ./install.sh
 claude-bridge init
 
@@ -110,9 +110,10 @@ Configure sync targets in `~/.claude-bridge/sync.conf`.
 
 ## Security
 
-- Files are encrypted with [age](https://github.com/FiloSottile/age) using a passphrase you choose
+- Files are encrypted with [age](https://github.com/FiloSottile/age) using a generated key pair
 - Only encrypted data is pushed to the remote repository
-- Passphrase is stored locally at `~/.claude-bridge/passphrase` (mode `600`)
+- Identity (private key) is stored locally at `~/.claude-bridge/identity.txt` (mode `600`)
+- To set up additional machines, copy the identity file from your first machine
 - The repository should be **private** — encryption is a second layer of defense
 
 ## Requirements
@@ -164,7 +165,7 @@ cd my-claude-sync
 # 3. インストール & 初期化
 ./install.sh
 claude-bridge init
-# パスフレーズを入力（他のマシンでも同じものを使用）
+# 暗号化キーペアが自動生成される
 
 # 4. 初回 push
 claude-bridge push
@@ -177,7 +178,7 @@ claude-bridge push
 git clone git@github.com:<you>/my-claude-sync.git
 cd my-claude-sync
 
-# 2. インストール & 初期化（同じパスフレーズを使用）
+# 2. インストール & 初期化（1台目の identity をペースト）
 ./install.sh
 claude-bridge init
 
@@ -187,9 +188,10 @@ claude-bridge map /home/user/projects/app /Users/user/dev/app
 
 ### セキュリティ
 
-- [age](https://github.com/FiloSottile/age) によるパスフレーズベースの暗号化
+- [age](https://github.com/FiloSottile/age) による鍵ペアベースの暗号化
 - 暗号化済みデータのみがリモートに送信される
-- パスフレーズは `~/.claude-bridge/passphrase` にローカル保存（`chmod 600`）
+- Identity（秘密鍵）は `~/.claude-bridge/identity.txt` にローカル保存（`chmod 600`）
+- 2台目以降のセットアップ時は、1台目から identity ファイルをコピー
 - リポジトリは **Private** に設定すること（暗号化は二重防御）
 
 ### 動作要件
