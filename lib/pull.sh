@@ -52,6 +52,22 @@ apply_path_mappings() {
 }
 
 cmd_pull() {
+    local project_filter=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --project | -p)
+                project_filter="$2"
+                shift 2
+                ;;
+            *)
+                printf "Unknown option: %s\n" "$1" >&2
+                return 1
+                ;;
+        esac
+    done
+
     local repo_dir
     repo_dir=$(get_repo_dir)
     local encrypted_dir="${repo_dir}/encrypted"
@@ -96,9 +112,20 @@ cmd_pull() {
     local restored_count=0
     local skipped_count=0
 
+    if [[ -n "${project_filter}" ]]; then
+        printf "Filtering to project: %s\n" "${project_filter}" >&2
+    fi
+
     # Process each file in the manifest
     jq -r '.files | keys[]' "${remote_manifest}" | while IFS= read -r relative_path; do
         [[ -z "${relative_path}" ]] && continue
+
+        # Apply project filter if specified
+        if [[ -n "${project_filter}" ]]; then
+            if [[ "${relative_path}" != projects/*"${project_filter}"* ]]; then
+                continue
+            fi
+        fi
 
         local encrypted_path="${encrypted_dir}/${relative_path}.age"
 
