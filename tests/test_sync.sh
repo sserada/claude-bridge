@@ -78,19 +78,22 @@ test_crypto() {
         return 0
     fi
 
-    it "stores passphrase with correct permissions"
-    set_passphrase "test-passphrase-123"
-    assert_file_exists "${HOME}/.claude-bridge/passphrase"
+    it "generates identity and recipient files"
+    generate_identity
+    assert_file_exists "${HOME}/.claude-bridge/identity.txt"
 
-    it "passphrase file has 600 permissions"
+    it "identity file has 600 permissions"
     local perms
-    perms=$(stat -f "%Lp" "${HOME}/.claude-bridge/passphrase" 2>/dev/null || stat -c "%a" "${HOME}/.claude-bridge/passphrase" 2>/dev/null)
+    perms=$(stat -f "%Lp" "${HOME}/.claude-bridge/identity.txt" 2>/dev/null || stat -c "%a" "${HOME}/.claude-bridge/identity.txt" 2>/dev/null)
     assert_eq "600" "${perms}"
 
-    it "reads passphrase back"
-    local pp
-    pp=$(get_passphrase)
-    assert_eq "test-passphrase-123" "${pp}"
+    it "recipient file exists"
+    assert_file_exists "${HOME}/.claude-bridge/recipient.txt"
+
+    it "recipient is a valid age public key"
+    local recipient
+    recipient=$(get_recipient)
+    assert_true "[[ '${recipient}' == age1* ]]" "expected age1... public key"
 
     it "encrypts and decrypts a file (roundtrip)"
     local test_content="Hello, claude-bridge! 日本語テスト"
