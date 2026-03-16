@@ -5,7 +5,7 @@ set -euo pipefail
 # Source dependencies
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
-readonly MAPPINGS_FILE="${CLAUDE_BRIDGE_DIR}/path_mappings"
+MAPPINGS_FILE="${CLAUDE_BRIDGE_DIR}/path_mappings"
 
 ensure_mappings_file() {
     ensure_config_dir
