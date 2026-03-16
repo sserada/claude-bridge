@@ -7,10 +7,54 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/crypto.sh"
 
 check_claude_not_running() {
-    if pgrep -f "claude" &>/dev/null; then
+    # Match actual Claude Code processes, not unrelated ones (e.g., claude-bridge itself)
+    local patterns=(
+        "claude-code"
+        "node.*claude"
+        "@anthropic-ai/claude-code"
+    )
+
+    local found_pids=()
+    local found_cmds=()
+
+    for pattern in "${patterns[@]}"; do
+        while IFS= read -r line; do
+            [[ -z "${line}" ]] && continue
+            local pid cmd
+            pid=$(printf "%s" "${line}" | awk '{print $1}')
+            cmd=$(printf "%s" "${line}" | cut -d' ' -f2-)
+
+            # Exclude our own process and claude-bridge
+            if [[ "${cmd}" == *"claude-bridge"* ]]; then
+                continue
+            fi
+
+            found_pids+=("${pid}")
+            found_cmds+=("${cmd}")
+        done < <(pgrep -fl "${pattern}" 2>/dev/null || true)
+    done
+
+    if [[ ${#found_pids[@]} -gt 0 ]]; then
         printf "Warning: Claude Code appears to be running.\n" >&2
-        printf "Pushing while Claude is active may result in incomplete data.\n" >&2
-        printf "Please close Claude Code first, or use --force to push anyway.\n" >&2
+        printf "Detected processes:\n" >&2
+        for i in "${!found_pids[@]}"; do
+            printf "  PID %s: %s\n" "${found_pids[${i}]}" "${found_cmds[${i}]}" >&2
+        done
+        printf "\nPushing while Claude is active may result in incomplete data.\n" >&2
+        printf "Options:\n" >&2
+        printf "  - Close Claude Code and try again\n" >&2
+        printf "  - Use --force to push anyway\n" >&2
+
+        # Interactive prompt if stdin is a terminal
+        if [[ -t 0 ]]; then
+            printf "\nPush anyway? [y/N] " >&2
+            local answer
+            read -r answer
+            if [[ "${answer}" =~ ^[Yy]$ ]]; then
+                return 0
+            fi
+        fi
+
         return 1
     fi
 }
