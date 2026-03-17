@@ -6,7 +6,7 @@
 
 > Sync your Claude Code conversations and settings across machines — securely.
 
-**[日本語はこちら / Japanese](#japanese)**
+**[日本語はこちら / Japanese](README-ja.md)**
 
 `claude-bridge` encrypts your `~/.claude/` directory with [age](https://github.com/FiloSottile/age) and stores it in a private Git repository. Simple git-like interface: `push`, `pull`, `status`.
 
@@ -136,87 +136,3 @@ Configure sync targets in `~/.claude-bridge/sync.conf`.
 ## License
 
 [MIT](LICENSE)
-
----
-
-<a id="japanese"></a>
-
-## 日本語
-
-> Claude Code の会話履歴・設定をマシン間で安全に同期する CLI ツール
-
-### 概要
-
-`claude-bridge` は `~/.claude/` ディレクトリを [age](https://github.com/FiloSottile/age) で暗号化し、GitHub の Private リポジトリに保存します。Git ライクなインターフェース（`push` / `pull` / `status`）で簡単に同期できます。
-
-### 特徴
-
-- **Git ライク** — `push` / `pull` / `status` / `diff` のシンプルな CLI
-- **暗号化ファースト** — ローカルで暗号化してから push、復号は pull 時のみ
-- **差分同期** — 変更ファイルのみ暗号化・転送（SHA-256 マニフェスト）
-- **ゼロコンフィグ** — `init` 一発で使い始められる
-- **ゼロコスト** — GitHub Private リポをストレージに利用
-- **クロスマシン対応** — `map` でマシン間のパスを変換
-- **選択的同期** — `--project` で特定プロジェクトのみ同期
-- **自動同期** — `auto on` で cron による定期同期
-
-### クイックスタート
-
-#### 1台目（初回セットアップ）
-
-```bash
-# 1. GitHub でこのテンプレートから Private リポを作成
-#    "Use this template" → Private に設定
-
-# 2. クローン
-git clone git@github.com:<you>/my-claude-sync.git
-cd my-claude-sync
-
-# 3. インストール & 初期化
-./install.sh
-claude-bridge init
-# 暗号化キーペアが自動生成される
-
-# 4. 初回 push
-claude-bridge push
-```
-
-#### 2台目以降
-
-まず **1台目** で identity（秘密鍵）を表示してコピー:
-
-```bash
-cat ~/.claude-bridge/identity.txt
-```
-
-次に **2台目** で:
-
-```bash
-# 1. 同じリポをクローン
-git clone git@github.com:<you>/my-claude-sync.git
-cd my-claude-sync
-
-# 2. インストール
-./install.sh
-
-# 3. 初期化 — プロンプトが出たら1台目の identity をペースト
-claude-bridge init
-
-# 4. パスが異なる場合はマッピング追加
-claude-bridge map /home/user/projects/app /Users/user/dev/app
-```
-
-### セキュリティ
-
-- [age](https://github.com/FiloSottile/age) による鍵ペアベースの暗号化
-- 暗号化済みデータのみがリモートに送信される
-- Identity（秘密鍵）は `~/.claude-bridge/identity.txt` にローカル保存（`chmod 600`）
-- 2台目以降のセットアップ時は、1台目から identity ファイルをコピー
-- リポジトリは **Private** に設定すること（暗号化は二重防御）
-
-### 動作要件
-
-- Bash 4.0+
-- git
-- [age](https://github.com/FiloSottile/age)（`install.sh` で自動インストール）
-- jq（推奨、JSON 処理用）
