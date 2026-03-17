@@ -49,16 +49,26 @@ claude-bridge push
 
 ### Additional Machines
 
+First, on your **first machine**, copy the identity (private key):
+
+```bash
+cat ~/.claude-bridge/identity.txt
+```
+
+Then, on the **new machine**:
+
 ```bash
 # 1. Clone the same repo
 git clone git@github.com:<you>/my-claude-sync.git
 cd my-claude-sync
 
-# 2. Install and initialize (paste identity from first machine)
+# 2. Install
 ./install.sh
+
+# 3. Initialize — when prompted, paste the identity from your first machine
 claude-bridge init
 
-# 3. Map paths if they differ between machines
+# 4. Map paths if they differ between machines
 claude-bridge map /home/user/projects/app /Users/user/dev/app
 ```
 
@@ -173,16 +183,26 @@ claude-bridge push
 
 #### 2台目以降
 
+まず **1台目** で identity（秘密鍵）を表示してコピー:
+
+```bash
+cat ~/.claude-bridge/identity.txt
+```
+
+次に **2台目** で:
+
 ```bash
 # 1. 同じリポをクローン
 git clone git@github.com:<you>/my-claude-sync.git
 cd my-claude-sync
 
-# 2. インストール & 初期化（1台目の identity をペースト）
+# 2. インストール
 ./install.sh
+
+# 3. 初期化 — プロンプトが出たら1台目の identity をペースト
 claude-bridge init
 
-# 3. パスが異なる場合はマッピング追加
+# 4. パスが異なる場合はマッピング追加
 claude-bridge map /home/user/projects/app /Users/user/dev/app
 ```
 
