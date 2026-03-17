@@ -92,37 +92,50 @@ cmd_init() {
     ensure_config_dir
     ensure_config_file
 
-    # Check if this repo already has encrypted data (joining existing)
-    if has_encrypted_data; then
-        printf "Existing encrypted data found in repository.\n" >&2
-        printf "This appears to be a second machine joining an existing sync.\n\n" >&2
-        import_identity || return 1
-        printf "\nPulling and decrypting data from remote...\n\n" >&2
-        create_initial_manifest
-        source "$(dirname "${BASH_SOURCE[0]}")/pull.sh"
-        cmd_pull
-    else
-        printf "Fresh setup — generating new encryption key.\n" >&2
-        generate_identity
-        printf "Encryption key generated.\n" >&2
-        printf "  Identity:  %s\n" "${IDENTITY_FILE}" >&2
-        printf "  Recipient: %s\n\n" "$(get_recipient)" >&2
+    # Always ask the user whether this is a first machine or joining existing
+    printf "Is this your first machine, or are you joining an existing sync?\n\n" >&2
+    printf "  1) First machine  — generate a new encryption key\n" >&2
+    printf "  2) Join existing  — import identity from another machine\n\n" >&2
+    printf "Choose [1/2]: " >&2
+    local choice
+    read -r choice
 
-        local claude_dir
-        claude_dir=$(get_claude_dir)
+    case "${choice}" in
+        2)
+            import_identity || return 1
+            create_initial_manifest
 
-        if [[ -d "${claude_dir}" ]]; then
-            printf "Found Claude directory at %s\n" "${claude_dir}" >&2
-            create_initial_manifest
-            printf "Initial manifest created.\n\n" >&2
-            printf "Run 'claude-bridge push' to encrypt and sync your data.\n" >&2
-        else
-            printf "No Claude directory found at %s\n" "${claude_dir}" >&2
-            printf "Claude Code will create it when you first use it.\n" >&2
-            create_initial_manifest
-            printf "Initial manifest created.\n" >&2
-        fi
-    fi
+            if has_encrypted_data; then
+                printf "\nPulling and decrypting data from remote...\n\n" >&2
+                source "$(dirname "${BASH_SOURCE[0]}")/pull.sh"
+                cmd_pull
+            else
+                printf "\nNo encrypted data found yet. Run 'claude-bridge pull' after the first machine pushes.\n" >&2
+            fi
+            ;;
+        1 | *)
+            printf "\nGenerating new encryption key...\n" >&2
+            generate_identity
+            printf "Encryption key generated.\n" >&2
+            printf "  Identity:  %s\n" "${IDENTITY_FILE}" >&2
+            printf "  Recipient: %s\n\n" "$(get_recipient)" >&2
+
+            local claude_dir
+            claude_dir=$(get_claude_dir)
+
+            if [[ -d "${claude_dir}" ]]; then
+                printf "Found Claude directory at %s\n" "${claude_dir}" >&2
+                create_initial_manifest
+                printf "Initial manifest created.\n\n" >&2
+                printf "Run 'claude-bridge push' to encrypt and sync your data.\n" >&2
+            else
+                printf "No Claude directory found at %s\n" "${claude_dir}" >&2
+                printf "Claude Code will create it when you first use it.\n" >&2
+                create_initial_manifest
+                printf "Initial manifest created.\n" >&2
+            fi
+            ;;
+    esac
 
     printf "\nclaude-bridge initialized successfully!\n" >&2
     printf "Machine: %s\n" "$(config_get MACHINE_NAME)" >&2
