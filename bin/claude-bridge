@@ -21,6 +21,7 @@ Commands:
     map <src> <dst>   Add a path mapping between machines
     projects          List synced projects
     auto              Manage automatic sync (on/off/status)
+    reset             Remove local config and start fresh
 
 Options:
     -h, --help        Show this help message
@@ -128,6 +129,11 @@ main() {
             # shellcheck source=../lib/path_resolver.sh
             source "${LIB_DIR}/path_resolver.sh"
             cmd_map "$@"
+            ;;
+        reset)
+            # shellcheck source=../lib/reset.sh
+            source "${LIB_DIR}/reset.sh"
+            cmd_reset "$@"
             ;;
         *)
             printf "Error: unknown command '%s'\n\n" "${command}" >&2
